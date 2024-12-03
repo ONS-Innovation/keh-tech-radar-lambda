@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "keh-tech-radar-lambda"
+version = "0.1.0"
+description = ""
+authors = ["Sebastian <Sebastian.Evison-Theodossiades@ons.gov.uk>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+botocore = "^1.35.38"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+ruff = "^0.6.9"
+pylint = "^3.3.1"
+mypy = "^1.11.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
