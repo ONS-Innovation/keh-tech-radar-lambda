@@ -41,6 +41,15 @@ install:  ## Install the dependencies excluding dev.
 install-dev:  ## Install the dependencies including dev.
 	poetry install --no-root
 
-.PHONY: pytest
-pytest:  ## Run pytest
-	poetry run pytest
+
+.PHONY: test-lambda
+test-lambda:
+	@echo "Setting up test environment..."
+	@mkdir -p test_data
+	@cp project.json test_data/project.json
+	@echo "Running lambda test..."
+	python aws_lambda_script/main.py
+
+clean:
+	@echo "Cleaning up test data..."
+	@rm -rf test_data
