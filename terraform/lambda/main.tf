@@ -222,7 +222,7 @@ resource "aws_ecr_repository_policy" "lambda_ecr_access" {
 resource "aws_cloudwatch_event_rule" "daily_trigger" {
   name                = "${var.domain}-${var.service_subdomain}-daily-trigger"
   description         = "Triggers tech radar lambda daily"
-  schedule_expression = "cron(0 11 * * ? *)"
+  schedule_expression = "cron(0 10 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target" {

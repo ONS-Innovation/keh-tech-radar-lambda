@@ -3,6 +3,9 @@ FROM python:3.12-slim
 # Create a non-root user and group
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
+# Install AWS Lambda Runtime Interface Client
+RUN pip install --no-cache-dir awslambdaric
+
 # Set working directory
 WORKDIR /app
 
@@ -19,5 +22,6 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
-# Set the CMD to your handler (module_name.function_name)
-CMD [ "python", "-c", "import main; main.lambda_handler(None, None)" ]
+# Set the entrypoint
+ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
+CMD [ "main.lambda_handler" ]
