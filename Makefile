@@ -29,10 +29,6 @@ lint:  ## Run Python linter
 	make ruff
 	make pylint
 
-.PHONY: mypy
-mypy:  ## Run mypy.
-	poetry run mypy aws_lambda_script
-
 .PHONY: install
 install:  ## Install the dependencies excluding dev.
 	poetry install --only main --no-root
@@ -41,15 +37,7 @@ install:  ## Install the dependencies excluding dev.
 install-dev:  ## Install the dependencies including dev.
 	poetry install --no-root
 
-
-.PHONY: test-lambda
-test-lambda:
-	@echo "Setting up test environment..."
-	@mkdir -p test_data
-	@cp project.json test_data/project.json
+.PHONY: run-local
+run-local: ## Run lambda locally but connected to the S3 bucket
 	@echo "Running lambda test..."
-	python aws_lambda_script/main.py
-
-clean:
-	@echo "Cleaning up test data..."
-	@rm -rf test_data
+	poetry run python run_local.py

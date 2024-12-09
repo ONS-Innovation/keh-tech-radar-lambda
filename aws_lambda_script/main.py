@@ -11,26 +11,62 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Environment variables
-SOURCE_BUCKET = os.environ.get("SOURCE_BUCKET", "sdp-dev-tech-audit-tool-api")
-SOURCE_KEY = os.environ.get("SOURCE_KEY", "new_project_data.json")
-DESTINATION_BUCKET = os.environ.get("DESTINATION_BUCKET", "sdp-dev-tech-radar")
-DESTINATION_KEY = os.environ.get("DESTINATION_KEY", "onsTechDataAdoption.csv")
+SOURCE_BUCKET = os.environ.get("SOURCE_BUCKET")
+SOURCE_KEY = os.environ.get("SOURCE_KEY")
+DESTINATION_BUCKET = os.environ.get("DESTINATION_BUCKET")
+DESTINATION_KEY = os.environ.get("DESTINATION_KEY")
 
+# Set global s3 client
+client = boto3.client("s3")
 
-def get_json_from_s3(bucket: str, key: str) -> Dict:
-    """Retrieve JSON data from S3 bucket"""
+def get_data_from_s3(bucket: str, key: str) -> Dict:
+    """
+    Retrieves data from an S3 bucket and returns it as a dictionary.
+
+    Args:
+        bucket (str): The S3 bucket to retrieve the data from.
+        key (str): The S3 key to retrieve the data from.
+
+    Returns:
+        Dict: The data from the S3 bucket as a dictionary.
+    """
     try:
-        s3_client = boto3.client("s3")
-        response = s3_client.get_object(Bucket=bucket, Key=key)
-        json_data = json.loads(response["Body"].read().decode("utf-8"))
-        return json_data
+        response = client.get_object(Bucket=bucket, Key=key)
+        return response
+    except client.exceptions.NoSuchKey:
+        logger.info("No existing CSV found at %s/%s", bucket, key)
+        return []
     except Exception as e:
-        logger.error("Error retrieving JSON from S3: %s", str(e))
+        logger.error("Error retrieving CSV from S3: %s", str(e))
         raise
 
 
+def get_json_from_s3(bucket: str, key: str) -> Dict:
+    """
+    Retrieves JSON data from an S3 bucket and returns it as a dictionary.
+
+    Args:
+        bucket (str): The S3 bucket to retrieve the JSON from.
+        key (str): The S3 key to retrieve the JSON from.
+
+    Returns:
+        Dict: The JSON data as a dictionary.
+    """
+    response = get_data_from_s3(bucket, key)
+    json_data = json.loads(response["Body"].read().decode("utf-8"))
+    return json_data
+
+
 def process_project_data(project_data: Dict) -> List[Dict]:
-    """Process project data into the required format"""
+    """
+    Processes the project data into the required format.
+
+    Args:
+        project_data (Dict): The project data to process.
+
+    Returns:
+        List[Dict]: The processed data as a list of dictionaries.
+    """
     processed_data = []
 
     projects = project_data.get("projects", [])
@@ -84,10 +120,18 @@ def process_project_data(project_data: Dict) -> List[Dict]:
 
 
 def write_to_s3_csv(data: List[Dict], bucket: str, key: str):
-    """Write processed data to S3 as CSV"""
-    try:
-        s3_client = boto3.client("s3")
+    """
+    Writes processed data to S3 as CSV.
 
+    Args:
+        data (List[Dict]): The processed data to write to CSV.
+        bucket (str): The S3 bucket to write the CSV to.
+        key (str): The S3 key to write the CSV to.
+
+    Returns:
+        None
+    """
+    try:
         if not data:
             logger.warning("No data to write to CSV")
             return
@@ -98,7 +142,7 @@ def write_to_s3_csv(data: List[Dict], bucket: str, key: str):
         writer.writerows(data)
 
         # Upload to S3
-        s3_client.put_object(
+        client.put_object(
             Bucket=bucket,
             Key=key,
             Body=csv_buffer.getvalue().encode("utf-8"),
@@ -111,25 +155,35 @@ def write_to_s3_csv(data: List[Dict], bucket: str, key: str):
 
 
 def get_existing_csv_data(bucket: str, key: str) -> List[Dict]:
-    """Retrieve existing CSV data from S3 bucket"""
-    try:
-        s3_client = boto3.client("s3")
-        response = s3_client.get_object(Bucket=bucket, Key=key)
-        csv_content = response["Body"].read().decode("utf-8")
+    """
+    Retrieves existing CSV data from an S3 bucket and returns it as a list of dictionaries.
 
-        csv_buffer = StringIO(csv_content)
-        reader = csv.DictReader(csv_buffer)
-        return list(reader)
-    except s3_client.exceptions.NoSuchKey:
-        logger.info("No existing CSV found at %s/%s", bucket, key)
-        return []
-    except Exception as e:
-        logger.error("Error retrieving CSV from S3: %s", str(e))
-        raise
+    Args:
+        bucket (str): The S3 bucket to retrieve the CSV from.
+        key (str): The S3 key to retrieve the CSV from.
+
+    Returns:
+        List[Dict]: The existing CSV data as a list of dictionaries.
+    """
+    response = get_data_from_s3(bucket, key)
+    csv_content = response["Body"].read().decode("utf-8")
+
+    csv_buffer = StringIO(csv_content)
+    reader = csv.DictReader(csv_buffer)
+    return list(reader)
 
 
 def merge_project_data(new_data: List[Dict], existing_data: List[Dict]) -> List[Dict]:
-    """Merge new project data with existing CSV data"""
+    """
+    Merges new project data with existing CSV data.
+
+    Args:
+        new_data (List[Dict]): The new project data to merge.
+        existing_data (List[Dict]): The existing CSV data to merge with.
+
+    Returns:
+        List[Dict]: The merged data as a list of dictionaries.
+    """
     logger.info("Found %d existing projects in CSV", len(existing_data))
     logger.info("Found %d projects in new data", len(new_data))
 
@@ -150,10 +204,25 @@ def merge_project_data(new_data: List[Dict], existing_data: List[Dict]) -> List[
 
 
 def lambda_handler(event, context):
-    """Main Lambda handler function"""
+    """
+    Main Lambda handler function.
+
+    Args:
+        event (Dict): The event data.
+        context (Dict): The context data.
+
+    Returns:
+        Dict: The result of the Lambda execution.
+    """
     try:
         if not DESTINATION_BUCKET:
             raise ValueError("DESTINATION_BUCKET environment variable is required")
+        if not SOURCE_BUCKET:
+            raise ValueError("SOURCE_BUCKET environment variable is required")
+        if not SOURCE_KEY:
+            raise ValueError("SOURCE_KEY environment variable is required")
+        if not DESTINATION_KEY:
+            raise ValueError("DESTINATION_KEY environment variable is required")
 
         logger.info("Reading from %s/%s", SOURCE_BUCKET, SOURCE_KEY)
         logger.info("Writing to %s/%s", DESTINATION_BUCKET, DESTINATION_KEY)

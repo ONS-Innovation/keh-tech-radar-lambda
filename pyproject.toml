@@ -15,7 +15,6 @@ boto3 = "^1.35.73"
 black = "^24.10.0"
 ruff = "^0.6.9"
 pylint = "^3.3.1"
-mypy = "^1.11.2"
 
 [build-system]
 requires = ["poetry-core"]
