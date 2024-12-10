@@ -2,8 +2,14 @@
 
 This repo contains the lambda function and storage for the tech radar lambda. This code is designed to be deployed to AWS using Terraform and set to run on a cron job, once per day. The code reads the JSON data from the S3 bucket, that is gathered using the Tech Audit Tool, and formats and writes new projects to the CSV file that is accessed by the Tech Radar.
 
-
 This code links closely to the [Tech Radar](https://github.com/ONS-Innovation/keh-tech-radar), [Tech Audit Tool](https://github.com/ONS-Innovation/keh-tech-audit-tool) and [Tech Audit Tool API](https://github.com/ONS-Innovation/keh-tech-audit-tool-api).
+
+## Prerequisites
+
+- AWS CLI
+- Python 3.12
+- Docker
+- Pip
 
 ## Setting up & Running Locally
 
@@ -22,6 +28,8 @@ make install
 Set environment variables:
 
 ```bash
+export AWS_ACCESS_KEY_ID=<aws_access_key_id>
+export AWS_SECRET_ACCESS_KEY=<aws_secret_access_key>
 export SOURCE_BUCKET=<source_bucket>
 export SOURCE_KEY=<source_key>
 export DESTINATION_BUCKET=<destination_bucket>
@@ -45,8 +53,31 @@ make run-local
 
 This will mimic a lambda runtime environment and run the lambda locally.
 
-You are unable to containerise and run as the `lambda_runtime_api_addr` is not available in the local environment.
+## Running locally with Docker
 
+
+Build the docker image:
+
+```bash
+docker build -t <image_name> .
+```
+
+Run the docker image:
+
+```bash
+docker run --platform linux/amd64 -p 9000:8080 \
+-e SOURCE_BUCKET=<source_bucket> \
+-e SOURCE_KEY=<source_key> \
+-e DESTINATION_BUCKET=<destination_bucket> \
+-e DESTINATION_KEY=<destination_key> \
+<image_name>
+```
+
+Invoke the lambda function:
+
+```bash
+curl -X POST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
+```
 
 ## Storing the Container on AWS Elastic Container Registry (ECR)
 
@@ -78,6 +109,7 @@ docker push <aws-account-id>.dkr.ecr.eu-west-2.amazonaws.com/tech-radar-lambda:<
 ```
 
 ## Updating the running service using Terraform
+
 If the application has been modified then the following can be performed to update the running service:
 
 Build a new version of the container image and upload to ECR as per the instructions earlier in this guide.
@@ -129,6 +161,119 @@ terraform apply -var-file=env/dev/dev.tfvars
 ```
 
 When the terraform has applied successfully the running task will have been replaced by a task running the container version you specified in the tfvars file
+
+## Example structure
+
+<details>
+  <summary>View Example JSON Structure</summary>
+
+    ```JSON
+    {
+    'user': [
+        {
+        'email': 'test@ons.gov.uk',
+        'roles': ['Technical Contact', 'Editor'],
+        'grade': 'SEO'
+        },
+        {
+        'email': 'test.user@ons.gov.uk',
+        'roles': ['Delivery Manager Contact'],
+        'grade': 'HEO'
+        }
+    ],
+    'details': [
+        {
+        'name': 'Forward Program Engineer',
+        'short_name': 'FPE',
+        'documentation_link': ['https://test.ons.gov.uk'],
+        'project_description': 'Operative hybrid instruction set'
+        }
+    ],
+    'developed': ['In-house', []],
+    'source_control': [
+        {
+        'type': 'GitHub',
+        'links': [
+            {
+            'description': 'systematic',
+            'url': 'http://test.ons.gov.uk/Documentation'
+            }
+        ]
+        }
+    ],
+    'architecture': {
+        'hosting': {
+        'type': ['Hybrid'],
+        'details': ['AWS', 'Local']
+        },
+        'database': {
+        'main': [],
+        'others': ['DocumentDB']
+        },
+        'languages': {
+        'main': ['Python'],
+        'others': ['JavaScript', 'Java']
+        },
+        'frameworks': {
+        'main': [],
+        'others': ['Flask']
+        },
+        'cicd': {
+        'main': [],
+        'others': ['Github Actions']
+        },
+        'infrastructure': {
+        'main': [],
+        'others': ['Jenkins']
+        }
+    },
+    'stage': 'Development'
+    }
+    ```
+
+</details>
+
+<details>
+  <summary>View Example CSV Structure</summary>
+
+    | Field | Value |
+    | --- | --- |
+    | Project | Test Project |
+    | Project_Short | SDX |
+    | Project_Area |  |
+    | DST_Area |  |
+    | Team |  |
+    | Language_Main | Python |
+    | Language_Others | VB6 |
+    | Language_Frameworks |  |
+    | Testing_Frameworks |  |
+    | Hosted | GCP |
+    | Messaging_Type | PubSub |
+    | Containers |  |
+    | Architectures |  |
+    | Source_Control | GitLab |
+    | Branching_Strategy |  |
+    | Repo |  |
+    | Static_Analysis |  |
+    | Code_Formatter |  |
+    | Package_Manager |  |
+    | Security_Tools |  |
+    | CICD | Concourse |
+    | CICD_Orchestration | Kubernetes |
+    | Monitoring | GCP Stackdriver |
+    | Datastores |  |
+    | Database_Technologies |  |
+    | Data_Output_Formats | pck |
+    | Business_Dashboards |  |
+    | Integrations_ONS |  |
+    | Integrations_External |  |
+    | IAM_Services |  |
+    | Cloud_Services | GCP Cloud Datastore |
+    | Datasets_Used |  |
+    | Project_Tools |  |
+    | Other_Tools |  |
+    | Documentation |  |
+</details>
 
 ## Linting and Formatting
 

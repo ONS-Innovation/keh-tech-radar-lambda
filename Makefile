@@ -10,18 +10,19 @@ clean: ## Clean the temporary files.
 	rm -rf .mypy_cache
 	rm -rf .ruff_cache
 	rm -rf .pytest_cache
+	rm -rf __pycache__
 
 .PHONY: black
 black: ## Run black.
-	poetry run black aws_lambda_script || true
+	python3 -m black . || true
 
 .PHONY: ruff
 ruff: ## Run ruff without fixing.
-	poetry run ruff check aws_lambda_script || true
+	python3 -m ruff check . || true
 
 .PHONY: pylint
 pylint: ## Run pylint.
-	poetry run pylint aws_lambda_script || true
+	python3 -m pylint . || true
 
 .PHONY: lint
 lint:  ## Run Python linter
@@ -31,13 +32,13 @@ lint:  ## Run Python linter
 
 .PHONY: install
 install:  ## Install the dependencies excluding dev.
-	poetry install --only main --no-root
+	pip install -r requirements.txt
 
 .PHONY: install-dev
 install-dev:  ## Install the dependencies including dev.
-	poetry install --no-root
+	pip install -r dev_requirements.txt
 
 .PHONY: run-local
 run-local: ## Run lambda locally but connected to the S3 bucket
 	@echo "Running lambda test..."
-	poetry run python run_local.py
+	python3 run_local.py

@@ -19,6 +19,7 @@ DESTINATION_KEY = os.environ.get("DESTINATION_KEY")
 # Set global s3 client
 client = boto3.client("s3")
 
+
 def get_data_from_s3(bucket: str, key: str) -> Dict:
     """
     Retrieves data from an S3 bucket and returns it as a dictionary.
@@ -228,10 +229,6 @@ def lambda_handler(event, context):
         logger.info("Writing to %s/%s", DESTINATION_BUCKET, DESTINATION_KEY)
 
         project_data = get_json_from_s3(SOURCE_BUCKET, SOURCE_KEY)
-        projects = []
-        for project in project_data['projects']:
-            projects.append(project['details'][0]['name'])
-        logger.info("(JSON) Project names: %s", "; ".join(projects))
 
         new_processed_data = process_project_data(project_data)
 
@@ -239,14 +236,7 @@ def lambda_handler(event, context):
 
         merged_data = merge_project_data(new_processed_data, existing_data)
 
-        projects = []
-        for project in merged_data:
-            projects.append(project['Project'])
-        logger.info("(CSV) Merged data names: %s", "; ".join(projects))
-
         write_to_s3_csv(merged_data, DESTINATION_BUCKET, DESTINATION_KEY)
-
-
 
         result = {
             "statusCode": 200,

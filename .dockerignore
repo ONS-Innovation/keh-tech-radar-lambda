@@ -1,0 +1,10 @@
+.*
+LICENSE
+README.md
+Makefile
+run_local.py
+terraform/
+__pycache__
+.DS_Store
+CODEOWNERS
+dev_requirements.txt
