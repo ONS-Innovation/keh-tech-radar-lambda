@@ -70,6 +70,8 @@ docker run --platform linux/amd64 -p 9000:8080 \
 -e SOURCE_KEY=<source_key> \
 -e DESTINATION_BUCKET=<destination_bucket> \
 -e DESTINATION_KEY=<destination_key> \
+-e AWS_ACCESS_KEY_ID=<aws_access_key_id> \
+-e AWS_SECRET_ACCESS_KEY=<aws_secret_access_key> \
 <image_name>
 ```
 
@@ -77,6 +79,12 @@ Invoke the lambda function:
 
 ```bash
 curl -X POST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
+```
+
+Example response:
+
+```JSON
+{"statusCode": 200, "body": "{\"message\": \"Data processing completed successfully\", \"projects_in_json\": 14, \"existing_projects\": 34, \"new_projects_added\": 0, \"total_projects\": 34}"}
 ```
 
 ## Storing the Container on AWS Elastic Container Registry (ECR)
