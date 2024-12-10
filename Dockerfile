@@ -1,34 +1,12 @@
-# Use an official Python image as a base image
-FROM python:3.12-slim
+# Use AWS Lambda Python runtime as base image
+FROM public.ecr.aws/lambda/python:3.12
 
-# Create a non-root user
-RUN useradd -m appuser
+# Copy requirements and install dependencies
+COPY requirements.txt ${LAMBDA_TASK_ROOT}
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
-# Set the working directory
-WORKDIR /app
+# Copy function code
+COPY main.py ${LAMBDA_TASK_ROOT}
 
-# Install system dependencies for Python and pip
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    gcc \
-    libffi-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements file
-COPY requirements.txt /app/
-
-# Install dependencies using pip
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the application
-COPY . /app
-
-# Adjust permissions and ownership
-RUN chmod +x main.py
-RUN chown -R appuser:appuser /app
-
-# Use non-root user
-USER appuser
-
-# Set the entry point to execute the script using Python
-ENTRYPOINT ["python", "main.py"]
+# Set the CMD to your handler
+CMD [ "main.lambda_handler" ]

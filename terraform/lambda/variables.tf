@@ -91,3 +91,9 @@ variable "ecr_repository_name" {
   type        = string
   default     = "sdp-dev-tech-radar-lambda"
 }
+
+variable "cron_job_schedule" {
+  description = "Cron job schedule"
+  type        = string
+  default     = "cron(0 10 * * ? *)"
+}

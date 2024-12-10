@@ -9,7 +9,6 @@ terraform {
 
 }
 
-# 1. First create the IAM role
 resource "aws_iam_role" "lambda_execution_role" {
   name = "${var.domain}-${var.service_subdomain}-lambda-role"
 
@@ -27,14 +26,12 @@ resource "aws_iam_role" "lambda_execution_role" {
   })
 }
 
-# 2. Attach basic execution policy
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   role       = aws_iam_role.lambda_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   depends_on = [aws_iam_role.lambda_execution_role]
 }
 
-# 3. Add ECR policy
 resource "aws_iam_role_policy" "lambda_ecr_policy" {
   name = "${var.domain}-${var.service_subdomain}-policy"
   role = aws_iam_role.lambda_execution_role.id
@@ -67,7 +64,6 @@ resource "aws_iam_role_policy" "lambda_ecr_policy" {
   depends_on = [aws_iam_role.lambda_execution_role]
 }
 
-# 4. Add S3 access policy
 resource "aws_iam_role_policy" "lambda_s3_access" {
   name = "${var.domain}-${var.service_subdomain}-lambda-s3-policy"
   role = aws_iam_role.lambda_execution_role.id
@@ -103,7 +99,6 @@ resource "aws_iam_role_policy" "lambda_s3_access" {
   depends_on = [aws_iam_role.lambda_execution_role]
 }
 
-# 5. Add additional permissions
 resource "aws_iam_role_policy" "lambda_additional_permissions" {
   name = "${var.domain}-${var.service_subdomain}-policy-2"
   role = aws_iam_role.lambda_execution_role.id
@@ -165,13 +160,45 @@ resource "aws_iam_role_policy" "lambda_additional_permissions" {
   depends_on = [aws_iam_role.lambda_execution_role]
 }
 
-# 6. Create the Lambda function
+resource "aws_iam_role_policy" "lambda_vpc_permissions" {
+  name   = "${var.domain}-${var.service_subdomain}-vpc-policy"
+  role   = aws_iam_role.lambda_execution_role.id
+  policy = data.aws_iam_policy_document.vpc_permissions.json
+}
+
+resource "aws_security_group" "lambda_sg" {
+  name        = "${var.domain}-${var.service_subdomain}-lambda-sg"
+  description = "Security group for ${var.domain}-${var.service_subdomain} Lambda function"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.domain}-${var.service_subdomain}-lambda-sg"
+  }
+}
+
+
 resource "aws_lambda_function" "tech_audit_lambda" {
   function_name = "${var.domain}-${var.service_subdomain}-lambda"
   package_type  = "Image"
   image_uri     = "${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_repository}:${var.container_ver}"
   
   role = aws_iam_role.lambda_execution_role.arn
+
+  logging_config {
+    log_format = "Text"
+  }
+  
+  vpc_config {
+    subnet_ids         = data.terraform_remote_state.vpc.outputs.private_subnets
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
 
   memory_size = 128
   timeout     = 30
@@ -189,6 +216,7 @@ resource "aws_lambda_function" "tech_audit_lambda" {
     aws_iam_role_policy.lambda_ecr_policy,
     aws_iam_role_policy.lambda_s3_access,
     aws_iam_role_policy.lambda_additional_permissions,
+    aws_iam_role_policy.lambda_vpc_permissions,
     aws_iam_role_policy_attachment.lambda_basic_execution
   ]
 }
@@ -221,8 +249,8 @@ resource "aws_ecr_repository_policy" "lambda_ecr_access" {
 # Add EventBridge (CloudWatch Events) rule for daily trigger
 resource "aws_cloudwatch_event_rule" "daily_trigger" {
   name                = "${var.domain}-${var.service_subdomain}-daily-trigger"
-  description         = "Triggers tech radar lambda daily"
-  schedule_expression = "cron(0 10 * * ? *)"
+  description         = "Triggers tech radar lambda."
+  schedule_expression = var.cron_job_schedule
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target" {
