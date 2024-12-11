@@ -37,8 +37,3 @@ install:  ## Install the dependencies excluding dev.
 .PHONY: install-dev
 install-dev:  ## Install the dependencies including dev.
 	pip install -r dev_requirements.txt
-
-.PHONY: run-local
-run-local: ## Run lambda locally but connected to the S3 bucket
-	@echo "Running lambda test..."
-	python3 run_local.py

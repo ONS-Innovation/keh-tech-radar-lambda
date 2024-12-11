@@ -4,14 +4,14 @@ This repo contains the lambda function and storage for the tech radar lambda. Th
 
 This code links closely to the [Tech Radar](https://github.com/ONS-Innovation/keh-tech-radar), [Tech Audit Tool](https://github.com/ONS-Innovation/keh-tech-audit-tool) and [Tech Audit Tool API](https://github.com/ONS-Innovation/keh-tech-audit-tool-api).
 
-## Prerequisites
+## Prerequisites
 
 - AWS CLI
 - Python 3.12
 - Docker
 - Pip
 
-## Setting up & Running Locally
+## Getting Started
 
 Clone the project
 
@@ -24,34 +24,6 @@ Install dependencies
 ```bash
 make install
 ```
-
-Set environment variables:
-
-```bash
-export AWS_ACCESS_KEY_ID=<aws_access_key_id>
-export AWS_SECRET_ACCESS_KEY=<aws_secret_access_key>
-export SOURCE_BUCKET=<source_bucket>
-export SOURCE_KEY=<source_key>
-export DESTINATION_BUCKET=<destination_bucket>
-export DESTINATION_KEY=<destination_key>
-```
-
-Example:
-
-```bash
-export SOURCE_BUCKET=sdp-dev-tech-audit-tool-api
-export SOURCE_KEY=new_project_data.json
-export DESTINATION_BUCKET=sdp-dev-tech-radar
-export DESTINATION_KEY=onsTechDataAdoption.csv
-```
-
-Run the lambda locally
-
-```bash
-make run-local
-```
-
-This will mimic a lambda runtime environment and run the lambda locally.
 
 ## Running locally with Docker
 
