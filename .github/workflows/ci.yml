@@ -21,14 +21,12 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      - name: Install Poetry
-        run: pipx install poetry==1.7.1
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: poetry
+          cache: pip
         
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"

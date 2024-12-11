@@ -95,5 +95,5 @@ variable "ecr_repository_name" {
 variable "cron_job_schedule" {
   description = "Cron job schedule"
   type        = string
-  default     = "cron(0 10 * * ? *)"
+  default     = "cron(0 10 * * ? *)" # 10:00AM every day
 }
