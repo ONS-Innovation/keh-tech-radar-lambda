@@ -1,8 +1,14 @@
+## Archived
+
+**Important**: This repository is now unused as the Digital Landscape pulls data directly from the Tech Audit bucket instead of having this Lambda transfer the data over periodically. The Terraform within this repository creates the S3 bucket. The code for that has been duplicated and placed in the [Digital Landscape](https://github.com/ONS-Innovation/keh-digital-landscape) repository.
+
+-----
+
 # Tech Radar Lambda & Storage
 
 This repo contains the lambda function and storage for the tech radar lambda. This code is designed to be deployed to AWS using Terraform and set to run on a cron job, once per day. The code reads the JSON data from the S3 bucket, that is gathered using the Tech Audit Tool, and formats and writes new projects to the CSV file that is accessed by the Tech Radar.
 
-This code links closely to the [Tech Radar](https://github.com/ONS-Innovation/keh-tech-radar), [Tech Audit Tool](https://github.com/ONS-Innovation/keh-tech-audit-tool) and [Tech Audit Tool API](https://github.com/ONS-Innovation/keh-tech-audit-tool-api).
+This code links closely to the [Digital Landscape](https://github.com/ONS-Innovation/keh-digital-landscape), [Tech Audit Tool](https://github.com/ONS-Innovation/keh-tech-audit-tool) and [Tech Audit Tool API](https://github.com/ONS-Innovation/keh-tech-audit-tool-api).
 
 ## Prerequisites
 
